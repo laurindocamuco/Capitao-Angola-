@@ -9,6 +9,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
@@ -17,6 +19,7 @@ import kotlin.random.Random
 class GameSoundEngine {
     private val sampleRate = 22050
     private val scope = CoroutineScope(Dispatchers.Default)
+    private val trackSemaphore = Semaphore(4)
     private var musicJob: Job? = null
     var isMuted = false
 
@@ -193,33 +196,40 @@ class GameSoundEngine {
     }
 
     private fun playRawBuffer(buffer: ShortArray) {
-        try {
-            val audioTrack = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_GAME)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(buffer.size * 2)
-                .setTransferMode(AudioTrack.MODE_STATIC)
-                .build()
+        scope.launch {
+            try {
+                trackSemaphore.withPermit {
+                    var track: AudioTrack? = null
+                    try {
+                        track = AudioTrack.Builder()
+                            .setAudioAttributes(
+                                AudioAttributes.Builder()
+                                    .setUsage(AudioAttributes.USAGE_GAME)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                    .build()
+                            )
+                            .setAudioFormat(
+                                AudioFormat.Builder()
+                                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                    .setSampleRate(sampleRate)
+                                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                                    .build()
+                            )
+                            .setBufferSizeInBytes(buffer.size * 2)
+                            .setTransferMode(AudioTrack.MODE_STATIC)
+                            .build()
 
-            audioTrack.write(buffer, 0, buffer.size)
-            audioTrack.play()
-            scope.launch {
-                delay(buffer.size * 1000L / sampleRate + 50)
-                audioTrack.release()
+                        track.write(buffer, 0, buffer.size)
+                        track.play()
+                        delay(buffer.size * 1000L / sampleRate + 50)
+                    } finally {
+                        track?.stop()
+                        track?.release()
+                    }
+                }
+            } catch (_: Exception) {
+                // Graceful fallback if device audio track is unavailable
             }
-        } catch (_: Exception) {
-            // Graceful fallback if device audio track is unavailable
         }
     }
 }

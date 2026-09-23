@@ -103,7 +103,7 @@ fun GameScreen(
                 engine = engine,
                 onNextLevel = {
                     val nextLevelNum = engine.currentLevel.levelNumber + 1
-                    val nextLvl = GameLevelId.values().find { it.levelNumber == nextLevelNum } ?: GameLevelId.FREE_ROAM
+                    val nextLvl = GameLevelId.entries.find { it.levelNumber == nextLevelNum } ?: GameLevelId.FREE_ROAM
                     engine.loadLevel(nextLvl)
                 },
                 onMainMenu = onOpenMenu

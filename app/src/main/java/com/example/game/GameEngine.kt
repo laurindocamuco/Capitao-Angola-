@@ -161,8 +161,8 @@ class GameEngine(
                 objectives.add(
                     Objective(
                         id = "obj_1",
-                        title = "Atravessar as Crianças",
-                        description = "Ajude o Menino Zito e a Menina Neide a cruzar a passadeira escolar com segurança.",
+                        title = "Atravessar o Menino Zito",
+                        description = "Ajude o Menino Zito a cruzar a passadeira escolar com segurança.",
                         targetPos = Vector3(-9f, 0f, -15f),
                         pointsReward = 100,
                         targetNpcId = "child_1"
@@ -171,6 +171,16 @@ class GameEngine(
                 objectives.add(
                     Objective(
                         id = "obj_2",
+                        title = "Atravessar a Menina Neide",
+                        description = "Ajude a Menina Neide a cruzar a passadeira escolar com segurança.",
+                        targetPos = Vector3(-9f, 0f, -14f),
+                        pointsReward = 100,
+                        targetNpcId = "child_2"
+                    )
+                )
+                objectives.add(
+                    Objective(
+                        id = "obj_3",
                         title = "Amparar a Vovó Teresa",
                         description = "Ajude a Vovó Teresa a recolher as suas compras e atravessar a rua com carinho.",
                         targetPos = Vector3(10f, 0f, -3f),
@@ -670,13 +680,14 @@ class GameEngine(
     }
 
     private fun checkObjectiveProgress(npcId: String) {
-        val currentObj = objectives.getOrNull(currentObjectiveIndex)
-        if (currentObj != null && currentObj.targetNpcId == npcId) {
-            currentObj.isCompleted = true
-            currentObjectiveIndex++
-
-            if (currentObjectiveIndex >= objectives.size) {
-                // Level Completed!
+        val matchingObj = objectives.find { it.targetNpcId == npcId && !it.isCompleted }
+        if (matchingObj != null) {
+            matchingObj.isCompleted = true
+            val nextUncompleted = objectives.indexOfFirst { !it.isCompleted }
+            if (nextUncompleted != -1) {
+                currentObjectiveIndex = nextUncompleted
+            } else {
+                currentObjectiveIndex = objectives.size
                 onLevelFinished()
             }
         }
