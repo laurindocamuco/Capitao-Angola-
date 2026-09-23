@@ -1,0 +1,6 @@
+{
+  "name": "Capitão Angola",
+  "description": "Jogo 3D de Ação e Aventura do herói angolano que protege sua comunidade com bravura, solidariedade e justiça.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
